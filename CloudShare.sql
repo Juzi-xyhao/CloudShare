@@ -104,4 +104,4 @@ create table user_info
 )
     comment '用户信息';
 
-INSERT INTO `user_info` VALUES ('3178033358', '管理员', 'xyhaomail@163.com', null, null, '47ec2dd791e31e2ef2076caf64ed9b3d', '2023-09-28 13:54:01', '2023-12-28 13:54:01', '1', '238302835', '10737418240','10.2.22.97');
+INSERT INTO `user_info` VALUES ('3178033358', '管理员', 'test@test.com', null, null, '47ec2dd791e31e2ef2076caf64ed9b3d', '2023-09-28 13:54:01', '2023-12-28 13:54:01', '1', '238302835', '10737418240','10.2.22.97');
