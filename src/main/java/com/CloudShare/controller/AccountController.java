@@ -7,6 +7,7 @@ import com.CloudShare.entity.config.AppConfig;
 import com.CloudShare.entity.constants.Constants;
 import com.CloudShare.entity.dto.CreateImageCode;
 import com.CloudShare.entity.dto.SessionWebUserDto;
+import com.CloudShare.entity.enums.ResponseCodeEnum;
 import com.CloudShare.entity.enums.VerifyRegexEnum;
 import com.CloudShare.entity.pojo.UserInfo;
 import com.CloudShare.entity.vo.ResponseVO;
@@ -14,7 +15,7 @@ import com.CloudShare.exception.BusinessException;
 import com.CloudShare.service.EmailCodeService;
 import com.CloudShare.service.UserInfoService;
 import com.CloudShare.task.SendWeatherTask;
-import com.CloudShare.utils.IpUtil;
+import com.CloudShare.utils.IPUtil;
 import com.CloudShare.utils.StringTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,9 +62,19 @@ public class AccountController extends BaseController {
 
 
     @RequestMapping("/sendWeatherEmailToMyself")
-    @GlobalInterceptor(checkLogin = false, checkParams = true)
-    public void sendEmailCode1() {
-        sendWeatherTask.sendWeatherToMyEmail();
+    @GlobalInterceptor(checkLogin = false, checkParams = false)
+    public Object sendWeatherCode(HttpServletRequest request) {
+        try{
+            sendWeatherTask.sendWeatherToMyEmail();
+            return "OK";
+        }catch (Exception e){
+            logger.error("地址请求错误，请求地址{},错误信息:", request.getRequestURL(), e);
+            ResponseVO errorResponse = new ResponseVO();
+            errorResponse.setCode(ResponseCodeEnum.CODE_1000.getCode());
+            errorResponse.setInfo("false,please find more info in log files");
+            errorResponse.setStatus(STATUS_ERROR);
+            return errorResponse;
+        }
     }
 
 
@@ -117,7 +128,7 @@ public class AccountController extends BaseController {
                                     @VerifyParam(required = true) String checkCode,
                                     @VerifyParam(required = true) Integer type) {
         try {
-            String ipAddress = IpUtil.getIpAddr(request);
+            String ipAddress = IPUtil.getIpAddr(request);
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL))) {
                 throw new BusinessException("图片验证码不正确");  //验证成功后再发送邮件验证码
             }
@@ -151,7 +162,7 @@ public class AccountController extends BaseController {
                                @VerifyParam(required = true) String checkCode,
                                @VerifyParam(required = true) String emailCode) {
         try {
-            String ipAddress = IpUtil.getIpAddr(request);
+            String ipAddress = IPUtil.getIpAddr(request);
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
                 throw new BusinessException("图片验证码不正确");
             }
@@ -176,7 +187,7 @@ public class AccountController extends BaseController {
                             @VerifyParam(required = true) String password,
                             @VerifyParam(required = true) String checkCode) {
         try {
-            String ipAddress = IpUtil.getIpAddr(request);
+            String ipAddress = IPUtil.getIpAddr(request);
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
                 throw new BusinessException("图片验证码不正确");
             }

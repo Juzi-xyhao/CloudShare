@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
  * @date 2019/12/23 9:02
  * @description 获取请求真实IP
  */
-public class IpUtil {
+public class IPUtil {
 
     public static String getIpAddr(HttpServletRequest request) {
         String ipAddress = null;

@@ -17,20 +17,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
 
 
 public class BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseController.class);
 
-    protected static final String STATUC_SUCCESS = "success";
+    protected static final String STATUS_SUCCESS = "success";
 
-    protected static final String STATUC_ERROR = "error";
+    protected static final String STATUS_ERROR = "error";
 
     protected <T> ResponseVO getSuccessResponseVO(T t) {  //参数t是传入的FileInfoVO对象
         ResponseVO<T> responseVO = new ResponseVO<>();
-        responseVO.setStatus(STATUC_SUCCESS);
+        responseVO.setStatus(STATUS_SUCCESS);
         responseVO.setCode(ResponseCodeEnum.CODE_200.getCode());
         responseVO.setInfo(ResponseCodeEnum.CODE_200.getMsg());
         responseVO.setData(t);
