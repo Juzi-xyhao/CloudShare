@@ -18,13 +18,16 @@ SET FOREIGN_KEY_CHECKS=0;
 -- ----------------------------
 -- Table structure for email_code
 -- ----------------------------
-CREATE TABLE `email_code` (
-                              `email` varchar(150) NOT NULL COMMENT '邮箱',
-                              `code` varchar(5) NOT NULL COMMENT '编号',
-                              `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-                              `status` tinyint(1) DEFAULT NULL COMMENT '0:未使用  1:已使用',
-                              PRIMARY KEY (`email`,`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='邮箱验证码';
+create table email_code
+(
+    email       varchar(150) not null comment '邮箱',
+    code        varchar(5)   not null comment '编号',
+    create_time datetime     null comment '创建时间',
+    status      tinyint(1)   null comment '0:未使用  1:已使用',
+    ip_address  varchar(50)  null comment '用户请求发送邮件时的ip地址',
+    primary key (email, code)
+)
+    comment '邮箱验证码';
 
 
 -- ----------------------------
@@ -77,22 +80,28 @@ CREATE TABLE `file_share` (
 -- ----------------------------
 -- Table structure for user_info
 -- ----------------------------
-CREATE TABLE `user_info` (
-                             `user_id` varchar(10) NOT NULL COMMENT '用户ID',
-                             `nick_name` varchar(20) DEFAULT NULL COMMENT '昵称',
-                             `email` varchar(150) DEFAULT NULL COMMENT '邮箱',
-                             `qq_open_id` varchar(35) DEFAULT NULL COMMENT 'qqOpenID',
-                             `qq_avatar` varchar(150) DEFAULT NULL COMMENT 'qq头像',
-                             `password` varchar(50) DEFAULT NULL COMMENT '密码',
-                             `join_time` datetime DEFAULT NULL COMMENT '加入时间',
-                             `last_login_time` datetime DEFAULT NULL COMMENT '最后登录时间',
-                             `status` tinyint(4) DEFAULT NULL COMMENT '0:禁用 1:正常',
-                             `use_space` bigint(20) DEFAULT '0' COMMENT '使用空间单位byte',
-                             `total_space` bigint(20) DEFAULT NULL COMMENT '总空间',
-                             PRIMARY KEY (`user_id`),
-                             UNIQUE KEY `key_email` (`email`),
-                             UNIQUE KEY `key_nick_name` (`nick_name`),
-                             UNIQUE KEY `key_qq_open_id` (`qq_open_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户信息';
+create table user_info
+(
+    user_id         varchar(10)      not null comment '用户ID'
+        primary key,
+    nick_name       varchar(20)      null comment '昵称',
+    email           varchar(150)     null comment '邮箱',
+    qq_open_id      varchar(35)      null comment 'qqOpenID',
+    qq_avatar       varchar(150)     null comment 'qq头像',
+    password        varchar(50)      null comment '密码',
+    join_time       datetime         null comment '加入时间',
+    last_login_time datetime         null comment '最后登录时间',
+    status          tinyint          null comment '0:禁用 1:正常',
+    use_space       bigint default 0 null comment '使用空间单位byte',
+    total_space     bigint           null comment '总空间',
+    ip_address      varchar(50)      null comment '用户ip地址',
+    constraint key_email
+        unique (email),
+    constraint key_nick_name
+        unique (nick_name),
+    constraint key_qq_open_id
+        unique (qq_open_id)
+)
+    comment '用户信息';
 
-INSERT INTO `user_info` VALUES ('3178033358', '管理员', 'xyhaomail@163.com', null, null, '47ec2dd791e31e2ef2076caf64ed9b3d', '2023-09-28 13:54:01', '2023-12-28 13:54:01', '1', '238302835', '10737418240');
+INSERT INTO `user_info` VALUES ('3178033358', '管理员', 'xyhaomail@163.com', null, null, '47ec2dd791e31e2ef2076caf64ed9b3d', '2023-09-28 13:54:01', '2023-12-28 13:54:01', '1', '238302835', '10737418240','10.2.22.97');
