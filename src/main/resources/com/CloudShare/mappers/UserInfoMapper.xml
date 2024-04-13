@@ -27,6 +27,8 @@
         <result column="use_space" property="useSpace"/>
         <!--总空间-->
         <result column="total_space" property="totalSpace"/>
+        <!--用户ip地址-->
+        <result column="ip_address" property="ipAddress"/>
     </resultMap>
 
 
@@ -35,7 +37,7 @@
         user_id
         ,nick_name,email,qq_open_id,qq_avatar,
 		 password,join_time,last_login_time,status,use_space,
-		 total_space
+		 total_space,ip_address
     </sql>
 
     <sql id="base_condition_filed">
@@ -174,6 +176,9 @@
             <if test="bean.totalSpace != null">
                 total_space,
             </if>
+            <if test="bean.ipAddress != null">
+                ip_address,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="bean.userId!=null">
@@ -208,6 +213,9 @@
             </if>
             <if test="bean.totalSpace!=null">
                 #{bean.totalSpace},
+            </if>
+            <if test="bean.ipAddress!=null">
+                #{bean.ipAddress},
             </if>
         </trim>
     </insert>
@@ -249,6 +257,9 @@
             <if test="bean.totalSpace != null">
                 total_space,
             </if>
+            <if test="bean.ipAddress!=null">
+                ip_address,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="bean.userId!=null">
@@ -283,6 +294,9 @@
             </if>
             <if test="bean.totalSpace!=null">
                 #{bean.totalSpace},
+            </if>
+            <if test="bean.ipAddress!=null">
+                #{bean.ipAddress},
             </if>
         </trim>
         on DUPLICATE key update
@@ -320,6 +334,9 @@
             <if test="bean.totalSpace!=null">
                 total_space = VALUES(total_space),
             </if>
+            <if test="bean.ipAddress!=null">
+                ip_address = VALUES(ip_address),
+            </if>
         </trim>
     </insert>
 
@@ -336,7 +353,8 @@
         last_login_time,
         status,
         use_space,
-        total_space
+        total_space,
+        ip_address
         )values
         <foreach collection="list" item="item" separator=",">
             (
@@ -350,7 +368,8 @@
             #{item.lastLoginTime},
             #{item.status},
             #{item.useSpace},
-            #{item.totalSpace}
+            #{item.totalSpace},
+            #{item.ipAddress}
             )
         </foreach>
     </insert>
@@ -368,7 +387,8 @@
         last_login_time,
         status,
         use_space,
-        total_space
+        total_space,
+        ip_address
         )values
         <foreach collection="list" item="item" separator=",">
             (
@@ -382,7 +402,8 @@
             #{item.lastLoginTime},
             #{item.status},
             #{item.useSpace},
-            #{item.totalSpace}
+            #{item.totalSpace},
+            #{item.ipAddress}
             )
         </foreach>
         on DUPLICATE key update
@@ -396,7 +417,8 @@
         last_login_time = VALUES(last_login_time),
         status = VALUES(status),
         use_space = VALUES(use_space),
-        total_space = VALUES(total_space)
+        total_space = VALUES(total_space),
+        ip_address = VALUES(ip_address)
     </insert>
 
     <!-- 根据UserId修改-->
@@ -432,6 +454,9 @@
             </if>
             <if test="bean.totalSpace != null">
                 total_space = #{bean.totalSpace},
+            </if>
+            <if test="bean.ipAddress != null">
+                ip_address = #{bean.ipAddress},
             </if>
         </set>
         where user_id=#{userId}

@@ -37,6 +37,17 @@ public class EmailCode implements Serializable {
      */
     private Integer status;
 
+    private String ipAddress;
+
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
 
     public void setEmail(String email) {
         this.email = email;

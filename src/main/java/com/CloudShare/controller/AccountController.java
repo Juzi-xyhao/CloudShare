@@ -14,6 +14,7 @@ import com.CloudShare.exception.BusinessException;
 import com.CloudShare.service.EmailCodeService;
 import com.CloudShare.service.UserInfoService;
 import com.CloudShare.task.SendWeatherTask;
+import com.CloudShare.utils.IpUtil;
 import com.CloudShare.utils.StringTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +57,15 @@ public class AccountController extends BaseController {
 
     @Resource
     SendWeatherTask sendWeatherTask;
+
+
+
+    @RequestMapping("/sendWeatherEmailToMyself")
+    @GlobalInterceptor(checkLogin = false, checkParams = true)
+    public void sendEmailCode1() {
+        sendWeatherTask.sendWeatherToMyEmail();
+    }
+
 
     /**
      * 验证码
@@ -102,25 +112,22 @@ public class AccountController extends BaseController {
     @RequestMapping("/sendEmailCode")
     @GlobalInterceptor(checkLogin = false, checkParams = true)
     public ResponseVO sendEmailCode(HttpSession session,
+                                    HttpServletRequest request,
                                     @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
                                     @VerifyParam(required = true) String checkCode,
                                     @VerifyParam(required = true) Integer type) {
         try {
+            String ipAddress = IpUtil.getIpAddr(request);
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL))) {
                 throw new BusinessException("图片验证码不正确");  //验证成功后再发送邮件验证码
             }
-            emailCodeService.sendEmailCode(email, type);
+            emailCodeService.sendEmailCode(email, type,ipAddress);
             return getSuccessResponseVO(null);
         } finally {
             session.removeAttribute(Constants.CHECK_CODE_KEY_EMAIL);
         }
     }
 
-    @RequestMapping("/sendEmailCode1")
-    @GlobalInterceptor(checkLogin = false, checkParams = true)
-    public void sendEmailCode1() {
-        sendWeatherTask.sendWeatherToMyEmail();
-    }
 
     /**
      * @param session:
@@ -137,16 +144,18 @@ public class AccountController extends BaseController {
     @RequestMapping("/register")
     @GlobalInterceptor(checkLogin = false, checkParams = true)
     public ResponseVO register(HttpSession session,
+                               HttpServletRequest request,
                                @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
                                @VerifyParam(required = true, max = 20) String nickName,
                                @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password,
                                @VerifyParam(required = true) String checkCode,
                                @VerifyParam(required = true) String emailCode) {
         try {
+            String ipAddress = IpUtil.getIpAddr(request);
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
                 throw new BusinessException("图片验证码不正确");
             }
-            userInfoService.register(email, nickName, password, emailCode);
+            userInfoService.register(email, nickName, password, emailCode,ipAddress);
             return getSuccessResponseVO(null);
         } finally {
             session.removeAttribute(Constants.CHECK_CODE_KEY);
@@ -167,10 +176,11 @@ public class AccountController extends BaseController {
                             @VerifyParam(required = true) String password,
                             @VerifyParam(required = true) String checkCode) {
         try {
+            String ipAddress = IpUtil.getIpAddr(request);
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
                 throw new BusinessException("图片验证码不正确");
             }
-            SessionWebUserDto sessionWebUserDto = userInfoService.login(email, password);
+            SessionWebUserDto sessionWebUserDto = userInfoService.login(email, password,ipAddress);
             session.setAttribute(Constants.SESSION_KEY, sessionWebUserDto);
             return getSuccessResponseVO(sessionWebUserDto);
         } finally {

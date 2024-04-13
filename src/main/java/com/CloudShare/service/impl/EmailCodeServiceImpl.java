@@ -172,7 +172,7 @@ public class EmailCodeServiceImpl implements EmailCodeService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void sendEmailCode(String toEmail, Integer type) {
+    public void sendEmailCode(String toEmail, Integer type,String ipAddress) {
         //如果是注册，校验邮箱是否已存在
         if (type == Constants.ZERO) {
             UserInfo userInfo = userInfoMapper.selectByEmail(toEmail);
@@ -190,6 +190,7 @@ public class EmailCodeServiceImpl implements EmailCodeService {
         emailCode.setEmail(toEmail);
         emailCode.setStatus(Constants.ZERO);
         emailCode.setCreateTime(new Date());
+        emailCode.setIpAddress(ipAddress);
         emailCodeMapper.insert(emailCode);
     }
 

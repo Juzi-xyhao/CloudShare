@@ -115,9 +115,9 @@ public interface UserInfoService {
     Integer deleteUserInfoByQqOpenId(String qqOpenId);
 
 
-    SessionWebUserDto login(String email, String password);
+    SessionWebUserDto login(String email, String password,String ipAddress);
 
-    void register(String email, String nickName, String password, String emailCode);
+    void register(String email, String nickName, String password, String emailCode,String ipAddress);
 
     void resetPwd(String email, String password, String emailCode);
 

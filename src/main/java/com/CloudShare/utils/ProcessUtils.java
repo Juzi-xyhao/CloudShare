@@ -14,7 +14,7 @@ public class ProcessUtils {
 
     public static String executeCommand(String cmd, Boolean outprintLog) throws BusinessException {
         if (StringTools.isEmpty(cmd)) {
-            logger.error("--- 指令执行失败，因为要执行的FFmpeg指令为空！ ---");
+            logger.error("--- 指令执行失败，因为要执行的指令为空！ ---");
             return null;
         }
 
@@ -22,14 +22,14 @@ public class ProcessUtils {
         Process process = null;
         try {
             process = Runtime.getRuntime().exec(cmd);
-            // 执行ffmpeg指令
+            // 执行指令
             // 取出输出流和错误流的信息
-            // 注意：必须要取出ffmpeg在执行命令过程中产生的输出信息，如果不取的话当输出流信息填满jvm存储输出流信息的缓冲区时，线程就会阻塞住
+            // 注意：必须要取出在执行命令过程中产生的输出信息，如果不取的话当输出流信息填满jvm存储输出流信息的缓冲区时，线程就会阻塞住
             PrintStream errorStream = new PrintStream(process.getErrorStream());
             PrintStream inputStream = new PrintStream(process.getInputStream());
             errorStream.start();
             inputStream.start();
-            // 等待ffmpeg命令执行完
+            // 等待命令执行完
             process.waitFor();
             // 获取执行结果字符串
             String result = errorStream.stringBuffer.append(inputStream.stringBuffer + "\n").toString();
@@ -42,9 +42,9 @@ public class ProcessUtils {
             }
             return result;
         } catch (Exception e) {
-            // logger.error("执行命令失败:{} ", e.getMessage());
+             logger.error("执行"+ cmd + "命令失败:{} ", e.getMessage());
             e.printStackTrace();
-            throw new BusinessException("视频转换失败");
+            throw new BusinessException("命令"+ cmd + "执行失败");
         } finally {
             if (null != process) {
                 ProcessKiller ffmpegKiller = new ProcessKiller(process);
@@ -54,9 +54,10 @@ public class ProcessUtils {
     }
 
     /**
-     * 在程序退出前结束已有的FFmpeg进程
+     * 在程序退出前结束已有的进程
      */
     private static class ProcessKiller extends Thread {
+
         private Process process;
 
         public ProcessKiller(Process process) {
@@ -71,7 +72,7 @@ public class ProcessUtils {
 
 
     /**
-     * 用于取出ffmpeg线程执行过程中产生的各种输出和错误流的信息
+     * 用于取出执行命令线程执行过程中产生的各种输出和错误流的信息
      */
     static class PrintStream extends Thread {
         InputStream inputStream = null;

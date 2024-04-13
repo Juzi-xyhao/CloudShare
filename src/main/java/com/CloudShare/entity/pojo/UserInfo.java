@@ -75,6 +75,16 @@ public class UserInfo implements Serializable {
      */
     private Long totalSpace;
 
+    private String ipAddress;
+
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
 
     public void setUserId(String userId) {
         this.userId = userId;

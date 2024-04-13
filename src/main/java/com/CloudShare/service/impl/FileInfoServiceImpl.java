@@ -24,6 +24,7 @@ import com.CloudShare.utils.StringTools;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.aop.scope.ScopedProxyUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -288,12 +289,14 @@ public class FileInfoServiceImpl implements FileInfoService {
 
             resultDto.setStatus(UploadStatusEnums.UPLOAD_FINISH.getCode());
 
+
             //TODO 事务什么提交？方法执行完就提交了，如果执行过程中触发了异常就回滚。
             // 只有最后一个文件片上传完触发的提交事务才会执行下面的afterCommit方法，其它片return的时候代码都没有执行到这里
 
             // 事务提交后调用异步方法
             //transferFile是一个异步方法，需要把他所在的类加入到IOC容器中，异步才能生效
             //事务如果没提交就不能调用transferFile，要确保事务已经提交了才能调用
+
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
@@ -321,29 +324,6 @@ public class FileInfoServiceImpl implements FileInfoService {
         }
     }
 
-    private void updateUserSpace(SessionWebUserDto webUserDto, Long totalSize) {
-        Integer count = userInfoMapper.updateUserSpace(webUserDto.getUserId(), totalSize, null);
-        if (count == 0) {
-            throw new BusinessException(ResponseCodeEnum.CODE_904);
-        }
-        UserSpaceDto spaceDto = redisComponent.getUserSpaceUse(webUserDto.getUserId());
-        spaceDto.setUseSpace(spaceDto.getUseSpace() + totalSize);
-        redisComponent.saveUserSpaceUse(webUserDto.getUserId(), spaceDto);
-    }
-
-    private String autoRename(String filePid, String userId, String fileName) {
-        FileInfoQuery fileInfoQuery = new FileInfoQuery();
-        fileInfoQuery.setUserId(userId);
-        fileInfoQuery.setFilePid(filePid);
-        fileInfoQuery.setDelFlag(FileDelFlagEnums.USING.getFlag());
-        fileInfoQuery.setFileName(fileName);
-        Integer count = this.fileInfoMapper.selectCount(fileInfoQuery);
-        if (count > 0) {
-            return StringTools.rename(fileName);
-        }
-
-        return fileName;
-    }
 
     @Async("taskScheduler")
     public void transferFile(String fileId, SessionWebUserDto webUserDto, Integer chunks) {
@@ -409,6 +389,33 @@ public class FileInfoServiceImpl implements FileInfoService {
             updateInfo.setStatus(transferSuccess ? FileStatusEnums.USING.getStatus() : FileStatusEnums.TRANSFER_FAIL.getStatus());
             fileInfoMapper.updateFileStatusWithOldStatus(fileId, webUserDto.getUserId(), updateInfo, FileStatusEnums.TRANSFER.getStatus());
         }
+    }
+
+
+
+
+    private void updateUserSpace(SessionWebUserDto webUserDto, Long totalSize) {
+        Integer count = userInfoMapper.updateUserSpace(webUserDto.getUserId(), totalSize, null);
+        if (count == 0) {
+            throw new BusinessException(ResponseCodeEnum.CODE_904);
+        }
+        UserSpaceDto spaceDto = redisComponent.getUserSpaceUse(webUserDto.getUserId());
+        spaceDto.setUseSpace(spaceDto.getUseSpace() + totalSize);
+        redisComponent.saveUserSpaceUse(webUserDto.getUserId(), spaceDto);
+    }
+
+    private String autoRename(String filePid, String userId, String fileName) {
+        FileInfoQuery fileInfoQuery = new FileInfoQuery();
+        fileInfoQuery.setUserId(userId);
+        fileInfoQuery.setFilePid(filePid);
+        fileInfoQuery.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        fileInfoQuery.setFileName(fileName);
+        Integer count = this.fileInfoMapper.selectCount(fileInfoQuery);
+        if (count > 0) {
+            return StringTools.rename(fileName);
+        }
+
+        return fileName;
     }
 
     public static void union1(String dirPath, String toFilePath, String fileName, Integer chunks, boolean delSource) throws BusinessException {

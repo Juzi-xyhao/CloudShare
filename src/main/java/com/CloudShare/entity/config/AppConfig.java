@@ -1,12 +1,15 @@
 package com.CloudShare.entity.config;
 
 import com.CloudShare.utils.StringTools;
+import lombok.Data;
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component("appConfig")
+@Data
 public class AppConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(AppConfig.class);
@@ -20,16 +23,12 @@ public class AppConfig {
     /**
      * 发送人
      */
-    @Value("${spring.mail.username:}")
+    @Value("${spring.mail.username}")
     private String sendUserName;
 
-
+    @Getter
     @Value("${admin.emails:}")
     private String adminEmails;
-
-    public String getAdminEmails() {
-        return adminEmails;
-    }
 
     @Value("${dev:false}")
     private Boolean dev;
@@ -42,14 +41,6 @@ public class AppConfig {
 
     @Value("明日份的%s天气请查收~")
     private String cityWeatherTopic;
-
-    public String getCityWeatherTopic() {
-        return cityWeatherTopic;
-    }
-
-    public void setCityWeatherTopic(String cityWeatherTopic) {
-        this.cityWeatherTopic = cityWeatherTopic;
-    }
 
     @Value("${qq.url.authorization:}")
     private String qqUrlAuthorization;  //QQURL授权地址
@@ -74,45 +65,5 @@ public class AppConfig {
             projectFolder = projectFolder + "/";
         }
         return projectFolder;  //  e:/Log/CloudShare/
-    }
-
-    public static Logger getLogger() {
-        return logger;
-    }
-
-    public String getSendUserName() {
-        return sendUserName;
-    }
-
-    public Boolean getDev() {
-        return dev;
-    }
-
-    public String getQqAppId() {
-        return qqAppId;
-    }
-
-    public String getQqAppKey() {
-        return qqAppKey;
-    }
-
-    public String getQqUrlAuthorization() {
-        return qqUrlAuthorization;
-    }
-
-    public String getQqUrlAccessToken() {
-        return qqUrlAccessToken;
-    }
-
-    public String getQqUrlOpenId() {
-        return qqUrlOpenId;
-    }
-
-    public String getQqUrlUserInfo() {
-        return qqUrlUserInfo;
-    }
-
-    public String getQqUrlRedirect() {
-        return qqUrlRedirect;
     }
 }

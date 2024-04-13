@@ -60,7 +60,7 @@ public interface EmailCodeService {
      */
     Integer deleteEmailCodeByEmailAndCode(String email, String code);
 
-    void sendEmailCode(String toEmail, Integer type);
+    void sendEmailCode(String toEmail, Integer type,String ipAddress);
 
     void checkCode(String email, String code);
 }

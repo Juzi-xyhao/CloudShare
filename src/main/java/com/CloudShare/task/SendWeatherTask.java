@@ -19,6 +19,12 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
@@ -47,16 +53,17 @@ public class SendWeatherTask {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailCodeServiceImpl.class);
 
-    @Scheduled(cron = "0 0 22 * * ?")
+    @Scheduled(cron = "00 00 22 * * ?")
     public void sendWeatherToMyEmail() {
-        String toEmail = appConfig.getAdminEmails();
+        String toEmail = appConfig.getSendUserName();
         try {
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
-            helper.setFrom(appConfig.getSendUserName());
-            helper.setTo(toEmail);
+            helper.setFrom(toEmail);
+            helper.setTo(appConfig.getAdminEmails());
             helper.setText(getTomorrowWeatherByCityCode(redisComponent.getSysSettingsDto().getCityCode()));
+
             helper.setSubject(String.format(appConfig.getCityWeatherTopic(),cityName));
             helper.setSentDate(new Date());
 
@@ -69,23 +76,40 @@ public class SendWeatherTask {
 
     private String getTomorrowWeatherByCityCode(String CityCode) {
         String apiUrl = String.format("http://t.weather.itboy.net/api/weather/city/%s", CityCode);
+        StringBuilder json = new StringBuilder();
+        try {
+            URL urlObject = new URL(apiUrl);
+            URLConnection uc = urlObject.openConnection();
+            uc.setRequestProperty("User-Agent", "Mozilla/4.76");
+            BufferedReader in = new BufferedReader(new InputStreamReader(uc.getInputStream(), "utf-8"));
+            String inputLine = null;
+            while ((inputLine = in.readLine()) != null) {
+                json.append(inputLine);
+            }
+            in.close();
 
-        String responseJson = OKHttpUtils.getRequest(apiUrl);
+//            String responseJson = OKHttpUtils.getRequest(apiUrl);
+            String responseJson = json.toString();
+            JSONObject data = JSON.parseObject(responseJson).getJSONObject("data");
+            JSONObject cityInfo = JSON.parseObject(responseJson).getJSONObject("cityInfo");
+            JSONArray cityWeather = (JSONArray) data.get("forecast");
+            String cityTomorrowWeather = cityWeather.get(1).toString();
 
-        JSONObject data = JSON.parseObject(responseJson).getJSONObject("data");
-        JSONObject cityInfo = JSON.parseObject(responseJson).getJSONObject("cityInfo");
-        JSONArray cityWeather = (JSONArray) data.get("forecast");
-        String cityTomorrowWeather = cityWeather.get(1).toString();
+            Weather weather = JSON.parseObject(cityTomorrowWeather, Weather.class);
+            weather.setCity(cityInfo.getString("city").substring(0,2));
+            cityName = weather.getCity();
+            weather.setTime(JSON.parseObject(responseJson).getString("time"));
+            weather.setShidu(data.getString("shidu"));
+            weather.setQuality(data.getString("quality"));
+            weather.setWendu(data.getString("wendu"));
 
-        Weather weather = JSON.parseObject(cityTomorrowWeather, Weather.class);
-        weather.setCity(cityInfo.getString("city").substring(0,2));
-        cityName = weather.getCity();
-        weather.setTime(JSON.parseObject(responseJson).getString("time"));
-        weather.setShidu(data.getString("shidu"));
-        weather.setQuality(data.getString("quality"));
-        weather.setWendu(data.getString("wendu"));
+            return getWeatherContent(weather);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        return getWeatherContent(weather);
     }
 
     private static String getWeatherContent(Weather weather) {

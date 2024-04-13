@@ -218,7 +218,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
 
     @Override
-    public SessionWebUserDto login(String email, String password) {
+    public SessionWebUserDto login(String email, String password,String ipAddress) {
         UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
         // 这里如果不看前端代码的话你可能会有一个问题，用户在注册时填写的密码是先经过MD5加密后再存入数据库
         // 这一行代码从数据库中拿到的用户·信息中的密码就是加密密码，但是又用加密密码去和用户登录输入的原始密码做equals比对，这怎么可能比对成功呢？
@@ -231,6 +231,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         }
         UserInfo updateInfo = new UserInfo();
         updateInfo.setLastLoginTime(new Date());
+        updateInfo.setIpAddress(ipAddress);
         this.userInfoMapper.updateByUserId(updateInfo, userInfo.getUserId());
         SessionWebUserDto sessionWebUserDto = new SessionWebUserDto();
         sessionWebUserDto.setNickName(userInfo.getNickName());
@@ -250,7 +251,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void register(String email, String nickName, String password, String emailCode) {
+    public void register(String email, String nickName, String password, String emailCode,String ipAddress) {
         UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
         if (userInfo != null) {
             throw new BusinessException("邮箱账号已经存在");
@@ -263,6 +264,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         emailCodeService.checkCode(email, emailCode);
         String userId = StringTools.getRandomNumber(Constants.LENGTH_10);
         userInfo = new UserInfo();
+        userInfo.setIpAddress(ipAddress);
         userInfo.setUserId(userId);
         userInfo.setNickName(nickName);
         userInfo.setEmail(email);

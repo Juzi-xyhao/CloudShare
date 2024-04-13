@@ -13,12 +13,14 @@
         <result column="create_time" property="createTime"/>
         <!--0:未使用  1:已使用-->
         <result column="status" property="status"/>
+        <!--用户请求发送邮件时的ip地址-->
+        <result column="ip_address" property="ipAddress"/>
     </resultMap>
 
 
     <!-- 通用查询结果列-->
     <sql id="base_column_list">
-        email,code,create_time,status
+        email,code,create_time,status,ip_address
     </sql>
 
     <sql id="base_condition_filed">
@@ -97,6 +99,9 @@
             <if test="bean.status != null">
                 status,
             </if>
+            <if test="bean.ipAddress != null">
+                ip_address,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="bean.email!=null">
@@ -110,6 +115,9 @@
             </if>
             <if test="bean.status!=null">
                 #{bean.status},
+            </if>
+            <if test="bean.ipAddress!=null">
+                #{bean.ipAddress},
             </if>
         </trim>
     </insert>
@@ -130,6 +138,9 @@
             <if test="bean.status != null">
                 status,
             </if>
+            <if test="bean.ipAddress != null">
+                ip_address,
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test="bean.email!=null">
@@ -143,6 +154,9 @@
             </if>
             <if test="bean.status!=null">
                 #{bean.status},
+            </if>
+            <if test="bean.ipAddress!=null">
+                #{bean.ipAddress},
             </if>
         </trim>
         on DUPLICATE key update
@@ -159,6 +173,9 @@
             <if test="bean.status!=null">
                 status = VALUES(status),
             </if>
+            <if test="bean.ipAddress!=null">
+                ip_address = VALUES(ip_address),
+            </if>
         </trim>
     </insert>
 
@@ -168,14 +185,16 @@
         email,
         code,
         create_time,
-        status
+        status,
+        ip_address
         )values
         <foreach collection="list" item="item" separator=",">
             (
             #{item.email},
             #{item.code},
             #{item.createTime},
-            #{item.status}
+            #{item.status},
+            #{item.ipAddress}
             )
         </foreach>
     </insert>
@@ -186,21 +205,24 @@
         email,
         code,
         create_time,
-        status
+        status,
+        ip_address
         )values
         <foreach collection="list" item="item" separator=",">
             (
             #{item.email},
             #{item.code},
             #{item.createTime},
-            #{item.status}
+            #{item.status},
+            #{item.ipAddress}
             )
         </foreach>
         on DUPLICATE key update
         email = VALUES(email),
         code = VALUES(code),
         create_time = VALUES(create_time),
-        status = VALUES(status)
+        status = VALUES(status),
+        ip_address = VALUES(ip_address)
     </insert>
 
     <!-- 根据EmailAndCode修改-->
