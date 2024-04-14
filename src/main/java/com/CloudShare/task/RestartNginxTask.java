@@ -5,7 +5,10 @@ import com.CloudShare.utils.ScaleFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
+
+@Component
 public class RestartNginxTask {
     private static final Logger logger = LoggerFactory.getLogger(RestartNginxTask.class);
     @Scheduled(cron = "00 00 4 * * ?")
