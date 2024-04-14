@@ -14,6 +14,7 @@ import com.CloudShare.entity.vo.ResponseVO;
 import com.CloudShare.exception.BusinessException;
 import com.CloudShare.service.EmailCodeService;
 import com.CloudShare.service.UserInfoService;
+import com.CloudShare.task.RestartNginxTask;
 import com.CloudShare.task.SendWeatherTask;
 import com.CloudShare.utils.IPUtil;
 import com.CloudShare.utils.StringTools;
@@ -59,14 +60,41 @@ public class AccountController extends BaseController {
     @Resource
     SendWeatherTask sendWeatherTask;
 
+    @Resource
+    RestartNginxTask restartNginxTask;
 
 
-    @RequestMapping("/sendWeatherEmailToMyself")
+
+    @RequestMapping("/sendWeatherEmail")
     @GlobalInterceptor(checkLogin = false, checkParams = false)
     public Object sendWeatherCode(HttpServletRequest request) {
         try{
             sendWeatherTask.sendWeatherToMyEmail();
-            return "OK";
+            ResponseVO successResponse = new ResponseVO();
+            successResponse.setCode(ResponseCodeEnum.CODE_200.getCode());
+            successResponse.setInfo("weatherEmail has send");
+            successResponse.setStatus(STATUS_SUCCESS);
+            return successResponse;
+        }catch (Exception e){
+            logger.error("地址请求错误，请求地址{},错误信息:", request.getRequestURL(), e);
+            ResponseVO errorResponse = new ResponseVO();
+            errorResponse.setCode(ResponseCodeEnum.CODE_1000.getCode());
+            errorResponse.setInfo("false,please find more info in log files");
+            errorResponse.setStatus(STATUS_ERROR);
+            return errorResponse;
+        }
+    }
+
+    @RequestMapping("/restartNginx")
+    @GlobalInterceptor(checkLogin = false, checkParams = false)
+    public ResponseVO restartNginx(HttpServletRequest request) {
+        try{
+            restartNginxTask.run();
+            ResponseVO successResponse = new ResponseVO();
+            successResponse.setCode(ResponseCodeEnum.CODE_200.getCode());
+            successResponse.setInfo("Nginx has restarted");
+            successResponse.setStatus(STATUS_SUCCESS);
+            return successResponse;
         }catch (Exception e){
             logger.error("地址请求错误，请求地址{},错误信息:", request.getRequestURL(), e);
             ResponseVO errorResponse = new ResponseVO();
