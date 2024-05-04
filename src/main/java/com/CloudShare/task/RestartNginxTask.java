@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class RestartNginxTask {
     private static final Logger logger = LoggerFactory.getLogger(RestartNginxTask.class);
-    @Scheduled(cron = "00 00 4 * * ?")
+    @Scheduled(cron = "0 0 */1 * * ?")
     public void run(){
         try {
-            String cmd = "systemctl restart nginx;";
-            ProcessUtils.executeCommand(cmd, false);
+            String cmd = "systemctl restart nginx";
+            ProcessUtils.executeCommand(cmd, true);
         } catch (Exception e) {
             logger.error("重启nginx失败", e);
         }

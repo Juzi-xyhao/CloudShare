@@ -604,7 +604,7 @@ public class FileInfoServiceImpl implements FileInfoService {
             tsFolder.mkdirs();
         }
         final String CMD_TRANSFER_2TS = "ffmpeg -y -i %s  -vcodec copy -acodec copy -vbsf h264_mp4toannexb %s";
-        final String CMD_CUT_TS = "ffmpeg -i %s -c copy -map 0 -f segment -segment_list %s -segment_time 30 %s/%s_%%4d.ts";
+        final String CMD_CUT_TS = "ffmpeg -i %s -c copy -map 0 -f segment -segment_list %s -segment_time 3 %s/%s_%%4d.ts";
 
         String tsPath = tsFolder + "/" + Constants.TS_NAME;
         //生成.ts

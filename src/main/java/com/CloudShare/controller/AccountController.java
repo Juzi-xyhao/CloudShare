@@ -37,6 +37,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 @RestController("accountController")
 public class AccountController extends BaseController {
@@ -66,45 +67,24 @@ public class AccountController extends BaseController {
 
 
     @RequestMapping("/sendWeatherEmail")
-    @GlobalInterceptor(checkLogin = false, checkParams = false)
-    public Object sendWeatherCode(HttpServletRequest request) {
+    public Object sendWeatherCode(HttpServletRequest request,HttpServletResponse response) {
         try{
+            
             sendWeatherTask.sendWeatherToMyEmail();
             ResponseVO successResponse = new ResponseVO();
             successResponse.setCode(ResponseCodeEnum.CODE_200.getCode());
-            successResponse.setInfo("weatherEmail has send");
+            successResponse.setInfo("weatherEmail has send。" + StringTools.getRandomString(5));
             successResponse.setStatus(STATUS_SUCCESS);
             return successResponse;
         }catch (Exception e){
             logger.error("地址请求错误，请求地址{},错误信息:", request.getRequestURL(), e);
             ResponseVO errorResponse = new ResponseVO();
             errorResponse.setCode(ResponseCodeEnum.CODE_1000.getCode());
-            errorResponse.setInfo("false,please find more info in log files");
+            errorResponse.setInfo("false,please find more info in log files。" +StringTools.getRandomString(5));
             errorResponse.setStatus(STATUS_ERROR);
             return errorResponse;
         }
     }
-
-    @RequestMapping("/restartNginx")
-    @GlobalInterceptor(checkLogin = false, checkParams = false)
-    public ResponseVO restartNginx(HttpServletRequest request) {
-        try{
-            restartNginxTask.run();
-            ResponseVO successResponse = new ResponseVO();
-            successResponse.setCode(ResponseCodeEnum.CODE_200.getCode());
-            successResponse.setInfo("Nginx has restarted");
-            successResponse.setStatus(STATUS_SUCCESS);
-            return successResponse;
-        }catch (Exception e){
-            logger.error("地址请求错误，请求地址{},错误信息:", request.getRequestURL(), e);
-            ResponseVO errorResponse = new ResponseVO();
-            errorResponse.setCode(ResponseCodeEnum.CODE_1000.getCode());
-            errorResponse.setInfo("false,please find more info in log files");
-            errorResponse.setStatus(STATUS_ERROR);
-            return errorResponse;
-        }
-    }
-
 
     /**
      * 验证码

@@ -96,7 +96,7 @@ public class SendWeatherTask {
             String cityTomorrowWeather = cityWeather.get(1).toString();
 
             Weather weather = JSON.parseObject(cityTomorrowWeather, Weather.class);
-            weather.setCity(cityInfo.getString("city").substring(0,2));
+            weather.setCity(cityInfo.getString("city"));
             cityName = weather.getCity();
             weather.setTime(JSON.parseObject(responseJson).getString("time"));
             weather.setShidu(data.getString("shidu"));
