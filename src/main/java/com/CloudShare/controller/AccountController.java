@@ -61,10 +61,6 @@ public class AccountController extends BaseController {
     @Resource
     SendWeatherTask sendWeatherTask;
 
-    @Resource
-    RestartNginxTask restartNginxTask;
-
-
 
     @RequestMapping("/sendWeatherEmail")
     public Object sendWeatherCode(HttpServletRequest request,HttpServletResponse response) {

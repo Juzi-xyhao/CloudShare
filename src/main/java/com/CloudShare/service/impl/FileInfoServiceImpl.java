@@ -32,13 +32,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
+import sun.nio.ch.FileChannelImpl;
 
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Method;
+import java.nio.channels.FileChannel;
+import java.nio.MappedByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -357,7 +365,7 @@ public class FileInfoServiceImpl implements FileInfoService {
             //真实文件路径
             targetFilePath = targetFolder.getPath() + "/" + realFileName;
             //合并文件
-            union(fileFolder.getPath(), targetFilePath, fileInfo.getFileName(), chunks, true);
+            union(fileFolder.getPath(), targetFilePath, fileInfo.getFileName(), true);
             //视频文件切割
             fileTypeEnum = FileTypeEnums.getFileTypeBySuffix(fileSuffix);
             if (FileTypeEnums.VIDEO == fileTypeEnum) {
@@ -480,67 +488,45 @@ public class FileInfoServiceImpl implements FileInfoService {
      * @description TODO/Finished
      * @date 2024/2/21 1:37
      */
-    public static void union(String dirPath, String toFilePath, String fileName, Integer chunks, boolean delSource) throws BusinessException {
+    public static void union(String dirPath, String toFilePath, String fileName, boolean delSource) throws BusinessException {
         File dir = new File(dirPath);
         if (!dir.exists()) {
             throw new BusinessException("目录不存在");
         }
-        File fileList[] = dir.listFiles();
-        ExecutorService executor = Executors.newFixedThreadPool((fileList.length + Constants.FILES_PER_THREAD - 1) / Constants.FILES_PER_THREAD);
-
-        try (RandomAccessFile writeFile = new RandomAccessFile(toFilePath, "rw")) {
-            for (int i = 0; i < fileList.length; i += Constants.FILES_PER_THREAD) {
-                executor.submit(new MergeTask(i, Math.min(i + Constants.FILES_PER_THREAD, fileList.length), dirPath,toFilePath));
+        File targetFile = new File(toFilePath);
+        RandomAccessFile writeFile = null;
+        File[] fileList = dir.listFiles();
+        try {
+            writeFile = new RandomAccessFile(targetFile, "rw");
+            FileChannel writeChannel = writeFile.getChannel();
+            MappedByteBuffer mappedBuffer = null;
+            for (int i = 0; i < fileList.length; i++) {
+                File chunkFile = new File(dirPath + File.separator + i);
+                try (RandomAccessFile readFile = new RandomAccessFile(chunkFile, "r");
+                     FileChannel readChannel = readFile.getChannel()) {
+                    long fileSize = chunkFile.length();
+                    mappedBuffer = writeChannel.map(FileChannel.MapMode.READ_WRITE, writeChannel.size(), fileSize);
+                    MappedByteBuffer readMappedBuffer = readChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
+                    mappedBuffer.put(readMappedBuffer);
+                    clean(readMappedBuffer);
+                }
             }
+            clean(mappedBuffer);
         } catch (Exception e) {
             logger.error("合并文件:{}失败", fileName, e);
             throw new BusinessException("合并文件" + fileName + "出错了");
-        } finally {
-            executor.shutdown();
-            while (!executor.isTerminated()) {
-                // 等待所有任务执行完成
-            }
-            if (!dir.exists()) {
-                throw new BusinessException("目录不存在");
-            }
-            File targetFile = new File(toFilePath);
-            RandomAccessFile writeFile = null;
-            fileList = dir.listFiles();
-            try {
-                writeFile = new RandomAccessFile(targetFile, "rw");
-                byte[] b = new byte[1024 * 10];
-                for (int i = 1; i <= fileList.length - chunks; i++) {
-                    int len = -1;
-                    //创建读块文件的对象
-                    File chunkFile = new File(dirPath + File.separator + i + "_");
-                    RandomAccessFile readFile = null;
-                    try {
-                        readFile = new RandomAccessFile(chunkFile, "r");
-                        while ((len = readFile.read(b)) != -1) {
-                            writeFile.write(b, 0, len);
-                        }
-                    } catch (Exception e) {
-                        logger.error("合并分片失败", e);
-                        throw new BusinessException("合并文件失败");
-                    } finally {
-                        readFile.close();
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("合并文件:{}失败", fileName, e);
-                throw new BusinessException("合并文件" + fileName + "出错了");
-            }
-            if (delSource) {
-                if (dir.exists()) {
-                    try {
-                        FileUtils.deleteDirectory(dir);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+        }
+        if (delSource) {
+            if (dir.exists()) {
+                try {
+                    FileUtils.deleteDirectory(dir);
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
     }
+
     static class MergeTask implements Runnable {
         private final int startIdx;
         private final int endIdx;
@@ -556,35 +542,38 @@ public class FileInfoServiceImpl implements FileInfoService {
 
         @Override
         public void run() {
-            byte[] b = new byte[1024 * 10];
             try {
-
-                //TODO 这里的正则表达式提取为一个方法
                 String threadName = Thread.currentThread().getName();
                 // 将提取的字符串转换为数字
                 int endIndex = threadName.length();
                 while (endIndex > 0 && Character.isDigit(threadName.charAt(endIndex - 1))) {
                     endIndex--;
                 }
-
                 // 使用substring方法获取数字部分
                 String numberStr = threadName.substring(endIndex);
                 if (numberStr.isEmpty()) {
                     System.out.println("No number found at the end of the string.");
                 }
-
                 File outputFile = new File(dirPath + File.separator + numberStr + "_");
-                try (RandomAccessFile writeFile = new RandomAccessFile(outputFile, "rw")) {
+                byte[] b = new byte[1024 * 10];
+                try (RandomAccessFile writeFile = new RandomAccessFile(outputFile, "rw");
+                     FileChannel writeChannel = writeFile.getChannel()) {
+                    MappedByteBuffer mappedBuffer = null;
                     for (int i = startIdx; i < endIdx; i++) {
-                        //创建读块文件的对象
                         File chunkFile = new File(dirPath + File.separator + i);
-                        try (RandomAccessFile readFile = new RandomAccessFile(chunkFile, "r")) {
-                            int len;
-                            while ((len = readFile.read(b)) != -1) {
-                                writeFile.write(b, 0, len);
-                            }
+                        try (RandomAccessFile readFile = new RandomAccessFile(chunkFile, "r");
+                             FileChannel readChannel = readFile.getChannel()) {
+                            long fileSize = chunkFile.length();
+                            mappedBuffer = writeChannel.map(FileChannel.MapMode.READ_WRITE, writeChannel.size(), fileSize);
+                            MappedByteBuffer readMappedBuffer = readChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileSize);
+                            mappedBuffer.put(readMappedBuffer);
+                            readMappedBuffer.force();
+                            clean(readMappedBuffer);
                         }
                     }
+                    mappedBuffer.force();
+                    writeChannel.close();
+                    clean(mappedBuffer);
                 }
             } catch (Exception e) {
                 logger.error("合并分片失败", e);
@@ -593,7 +582,49 @@ public class FileInfoServiceImpl implements FileInfoService {
         }
     }
 
+//    public static void clean(final Object mbb) throws Exception {
+//        if (mbb == null) {
+//            return;
+//        }
+//        AccessController.doPrivileged(new PrivilegedAction<Object>() {
+//            public Object run() {
+//                System.out.println("!!!!!!!!!!");
+//                try {
+//                    Method cleanerMethod = mbb.getClass().getMethod("cleaner", new Class[0]);
+//                    if (cleanerMethod != null) {
+//                        cleanerMethod.setAccessible(true);
+//                        Object cleanerObject = cleanerMethod.invoke(mbb, new Object[0]);
+//                        Method cleanMethod = cleanerObject.getClass().getDeclaredMethod("clean", new Class[0]);
+//                        if (cleanMethod != null) {
+//                            cleanMethod.invoke(cleanerObject, new Object[0]);
+//                        }
+//                    }
+//                } catch (Exception e) {
+//                    logger.error("关闭MappedByteBuffer句柄错误!", e);
+//                }
+//
+//                return null;
+//            }
+//
+//        });
+//    }
 
+
+    public static void clean(final Object buffer) throws Exception {
+        AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+                try {
+                    Method getCleanerMethod = buffer.getClass().getMethod("cleaner", new Class[0]);
+                    getCleanerMethod.setAccessible(true);
+                    sun.misc.Cleaner cleaner = (sun.misc.Cleaner) getCleanerMethod.invoke(buffer, new Object[0]);
+                    cleaner.clean();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        });
+    }
 
 
 

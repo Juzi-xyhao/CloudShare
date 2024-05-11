@@ -36,8 +36,10 @@ public class ProcessUtils {
             // 输出执行的命令信息
 
             if (outprintLog) {
+                System.out.println("cmd = " + cmd);
                 logger.info("执行命令:{}，已执行完毕,执行结果:{}", cmd, result);
             } else {
+                System.out.println("cmd = " + cmd);
                 logger.info("执行命令:{}，已执行完毕", cmd);
             }
             return result;

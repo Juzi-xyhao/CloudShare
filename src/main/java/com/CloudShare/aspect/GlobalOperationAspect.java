@@ -36,7 +36,6 @@ import java.util.List;
 // 1、引入aop的包
 // 2、定义一个切点（这里的切点是被@GlobalInterceptor注解所定义的方法）
 // 3、使用@Before注解在切点执行前执行被@Before注解的方法也就是interceptorDo
-//这是我总结的AOP部分使用方法，正确吗？
 
 @Component("operationAspect")  //，不属于spring三大层，交给spring管理，加入到IOC容器中
 @Aspect  //标明切面
